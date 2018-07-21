@@ -2,7 +2,11 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { map } from "lodash";
 import { installationDirectoryRequest } from "./actions/wow";
-import { listLocalAddonsRequest } from "./actions/addons";
+import {
+  listLocalAddonsRequest,
+  listLocalAddonsResponse,
+  fetchRemoteAddonRequest
+} from "./actions/addons";
 
 class App extends Component {
   componentDidMount() {
@@ -15,6 +19,35 @@ class App extends Component {
       nextProps.installDir
     ) {
       this.props.dispatch(listLocalAddonsRequest(nextProps.installDir));
+    }
+    if (
+      (nextProps.fetchingRemoteAddon &&
+        nextProps.fetchingRemoteAddon !== this.props.fetchingRemoteAddon) ||
+      (nextProps.remoteAddon &&
+        nextProps.remoteAddon !== this.props.remoteAddon)
+    ) {
+      const identifier =
+        nextProps.fetchingRemoteAddon || nextProps.remoteAddon.identifier;
+      const addons = map(nextProps.installedAddons, addon => {
+        if ((addon["X-Curse-Project-ID"] || addon.name) === identifier) {
+          return {
+            ...addon,
+            latestVersion: {
+              fetching: !!nextProps.fetchingRemoteAddon,
+              name:
+                nextProps.remoteAddon &&
+                nextProps.remoteAddon.latestVersion &&
+                nextProps.remoteAddon.latestVersion.name,
+              url:
+                nextProps.remoteAddon &&
+                nextProps.remoteAddon.latestVersion &&
+                nextProps.remoteAddon.latestVersion.url
+            }
+          };
+        }
+        return addon;
+      });
+      this.props.dispatch(listLocalAddonsResponse(addons));
     }
   }
 
@@ -44,6 +77,26 @@ class App extends Component {
                 <li key={index}>
                   {addon.Title || addon.name} (Version{" "}
                   {addon.Version || "inconnue"})
+                  <button
+                    onClick={() =>
+                      this.props.dispatch(
+                        fetchRemoteAddonRequest(
+                          addon["X-Curse-Project-ID"] || addon.name
+                        )
+                      )
+                    }
+                  >
+                    Vérifier
+                  </button>
+                  {addon.latestVersion
+                    ? `(Latest version: ${
+                        addon.latestVersion.fetching
+                          ? "..."
+                          : addon.latestVersion.error
+                            ? "ERROR"
+                            : addon.latestVersion.name
+                      })`
+                    : null}
                 </li>
               ))}
             </ul>
@@ -61,7 +114,10 @@ function mapStateToProps(state) {
     fetchInstallDirError: state.wow.fetchInstallDirError,
     fetchingLocalAddons: state.addons.fetchingLocalAddons,
     installedAddons: state.addons.installed,
-    fetchLocalAddonsError: state.addons.fetchLocalAddonsError
+    fetchLocalAddonsError: state.addons.fetchLocalAddonsError,
+    fetchingRemoteAddon: state.addons.fetchingRemoteAddon,
+    remoteAddon: state.addons.remoteAddon,
+    fetchRemoteAddonError: state.addons.fetchRemoteAddonError
   };
 }
 

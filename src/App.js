@@ -29,7 +29,7 @@ class App extends Component {
       const identifier =
         nextProps.fetchingRemoteAddon || nextProps.remoteAddon.identifier;
       const addons = map(nextProps.installedAddons, addon => {
-        if ((addon["X-Curse-Project-ID"] || addon.name) === identifier) {
+        if (addon.metadata.identifier === identifier) {
           return {
             ...addon,
             latestVersion: {
@@ -75,14 +75,12 @@ class App extends Component {
             <ul>
               {map(this.props.installedAddons, (addon, index) => (
                 <li key={index}>
-                  {addon.Title || addon.name} (Version{" "}
-                  {addon.Version || "inconnue"})
+                  {addon.Title || addon.metadata.identifier} (Version{" "}
+                  {addon.metadata.version || "inconnue"})
                   <button
                     onClick={() =>
                       this.props.dispatch(
-                        fetchRemoteAddonRequest(
-                          addon["X-Curse-Project-ID"] || addon.name
-                        )
+                        fetchRemoteAddonRequest(addon.metadata.identifier)
                       )
                     }
                   >

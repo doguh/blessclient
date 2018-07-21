@@ -18,7 +18,10 @@ async function getAddon(name, addonsDir) {
         return reject(error);
       }
       const lines = content.split("\r\n");
-      const addonObject = { name };
+      const metadata = {
+        folder: name
+      };
+      const addonObject = { metadata };
       map(lines, line => {
         if (line.substr(0, 2) === "##") {
           const spl = line.replace("## ", "").split(":");
@@ -27,6 +30,9 @@ async function getAddon(name, addonsDir) {
           }
         }
       });
+      metadata.identifier = addonObject["X-Curse-Project-ID"] || name;
+      metadata.version =
+        addonObject.Version || addonObject["X-Curse-Packaged-Version"];
       resolve(addonObject);
     });
   });

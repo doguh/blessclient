@@ -23,7 +23,7 @@ async function getAddon(name, addonsDir) {
         if (line.substr(0, 2) === "##") {
           const spl = line.replace("## ", "").split(":");
           if (spl.length > 1) {
-            addonObject[spl.shift().trim()] = spl.join(":");
+            addonObject[spl.shift().trim()] = spl.join(":").trim();
           }
         }
       });
